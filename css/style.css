@@ -4,9 +4,26 @@
 .h2-nav {
     padding-right: 15px;
 }
+.home-container {
+    width: 60%;
+    margin: 20px auto 0 auto;
+}
 .inner {
     text-align: center;
 }
 .inner p {
     font-size: 14px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition-duration: 0.3s;
+  transition-property: height, opacity;
+  transition-timing-function: ease;
+  overflow: hidden;
+}
+
+.fade-enter,
+.fade-leave-active {
+  opacity: 0
 }
