@@ -4,3 +4,9 @@
 .h2-nav {
     padding-right: 15px;
 }
+.inner {
+    text-align: center;
+}
+.inner p {
+    font-size: 14px;
+}
