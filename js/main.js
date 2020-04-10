@@ -8,18 +8,24 @@ class Partida {
   guardarSudoku() {
     const indexedDB = window.indexedDB;
     var request = indexedDB.open("sudoku", 1);
-
+    var sudokuarr= this.sudoku;
     request.onerror = function(event) {
       console.log("Error: ",event.target.errorCode);
     }
 
-    request.onupgradeneeded = function () {
+    request.onupgradeneeded = function (event) {
       db = request.result;
       const objectStore = db.createObjectStore('sudokus', { autoIncrement: true});
-      const transaction = db.transaction(['sudokus'], 'readwrite');
-      const objStore = transaction.objectStore('sudokus');
-      console.log(objectStore);
-      const req = objStore.add({title: "Quarry Memories", author: "Fred", isbn: 123456});
+      
+
+      var txn = event.target.transaction;
+
+    // note that txn.objectStore(...) will work here, because the 
+    // createObjectStore call earlier guarantees the store exists here
+    // within the implicit upgrade txn
+    var addRequest = txn.objectStore('sudokus').add(sudokuarr);
+
+    addRequest.onsuccess = function() {console.log('Success!');};
     };
 
     request.onsuccess = function(event) {
