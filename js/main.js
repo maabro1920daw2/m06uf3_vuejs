@@ -26,7 +26,7 @@ class Partida {
     }
   }
 
-  mostrarSudoku() {
+  /*mostrarSudoku() {
     const indexedDB = window.indexedDB;
     var req = indexedDB.open("sudoku", 1);
 
@@ -41,7 +41,7 @@ class Partida {
         console.log(array);
       }
     };
-  }
+  }*/
 
 }
 var db;
@@ -94,7 +94,7 @@ var json = [
 var suJson = new Partida(json);
 
 suJson.guardarSudoku();
-suJson.mostrarSudoku();
+//suJson.mostrarSudoku();
 Vue.component('home', {
   template: `
   <div>
@@ -146,12 +146,77 @@ Vue.component('pie-pagina', {
   `
 });
 
+var mixinComprobar = {
+  methods: {
+    evaluarJuego(dif) {
+      var suOriginal = json2[dif].nums;
+
+    }
+  }
+}
+
 Vue.component('su-facil', {
+  data: function() {
+    return {
+      sudokuMatrix: [],
+      initializeGameText: "Empezar!",
+      evaluateGameText: "Verificar!",
+      answerImage: "",
+      isGameStarted: false,
+      showAnswer: false
+    };
+  },
+  mixins: [mixinComprobar],
+  methods: {
+    initializeGame() {    
+      var json2 = JSON.parse(JSON.stringify(json));
+      var suFacil = json2[0].nums;
+      // Empty two random cells per row
+      for (var i = 0; i < 9; ++i) {
+          for (var k = 0; k < 3; ++k) {
+              var randomColumnIndex = Math.floor(Math.random() * suFacil.length);
+              suFacil[i][randomColumnIndex].num = "";
+          }
+      }
+      console.log(json);
+      this.sudokuMatrix = suFacil;
+      console.log(this.sudokuMatrix);
+      this.initializeGameText = "Reiniciar";
+      this.isGameStarted = true;
+    }
+  },
   template: `<div>
-  <div class="home-container">
-  <p>Do you see any Teletubbies in here? Do you see a slender plastic tag clipped to my shirt with my name printed on it? Do you see a little Asian child with a blank expression on his face sitting outside on a mechanical helicopter that shakes when you put quarters in it? No? Well, that's what you see at a toy store. And you must think you're in a toy store, because you're here shopping for an infant named Jeb. </p>
-  <p>Now that there is the Tec-9, a crappy spray gun from South Miami. This gun is advertised as the most popular gun in American crime. Do you believe that shit? It actually says that in the little book that comes with it: the most popular gun in American crime. Like they're actually proud of that shit.  </p>  
+  <div id="app-sudoku">
+
+  <div class="buttons-container">
+      <button class="button" v-on:click="initializeGame()"><span>{{ initializeGameText }}</span></button>
+
+      <transition name="fade">
+          <button class="button" v-on:click="evaluarJuego(0)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
+      </transition>
   </div>
+
+  <transition name="fade">
+      <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
+
+          <div v-for="row in sudokuMatrix" class="grid-row">
+              <div v-for="cell in row" class="grid-cell">
+                  <transition-group tag="div" name="list-animation">
+                      <input type="text" v-bind:key="cell.num" v-model="cell.num" class="grid-cell-editor" />
+                  </transition-group>
+              </div>
+          </div>
+
+      </div>
+  </transition>
+
+  <transition name="fade">
+      <div v-if="showAnswer" class="answer">
+          <img v-bind:src="answerImage" class="answer-image" />
+      </div>
+  </transition>
+
+</div>
   </div>`
 });
 
