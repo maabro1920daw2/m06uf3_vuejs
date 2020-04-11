@@ -36,12 +36,10 @@ button:focus {
     outline: none;
 }
 
-body {
+/*body {
     display: grid;
     grid-template-rows: 150px 1fr;
-    background-color: #ff5252;
-    font-family: 'Dosis', sans-serif;
-}
+}*/
 
 #app-sudoku {
     place-self: center;
@@ -72,30 +70,30 @@ body {
     font-weight: bold;
 }
 
-    .button span {
-        cursor: pointer;
-        display: inline-block;
-        position: relative;
-        transition: 0.5s;
-    }
+.button span {
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    transition: 0.5s;
+}
 
-        .button span:after {
-            content: '\00bb';
-            position: absolute;
-            opacity: 0;
-            top: 0;
-            right: -20px;
-            transition: 0.5s;
-        }
+.button span:after {
+    content: '\00bb';
+    position: absolute;
+    opacity: 0;
+    top: 0;
+    right: -20px;
+    transition: 0.5s;
+}
 
-    .button:hover span {
-        padding-right: 25px;
-    }
+.button:hover span {
+    padding-right: 25px;
+}
 
-        .button:hover span:after {
-            opacity: 1;
-            right: 0;
-        }
+.button:hover span:after {
+    opacity: 1;
+    right: 0;
+}
 
 .grid-sudoku {
     display: table;
@@ -103,13 +101,13 @@ body {
     border: 3px solid black;
 }
 
-    .grid-sudoku > div:nth-child(3), .grid-sudoku > div:nth-child(6) {
-        border-bottom: 3px solid black;
-    }
+.grid-sudoku > div:nth-child(3), .grid-sudoku > div:nth-child(6) {
+    border-bottom: 3px solid black;
+}
 
-    .grid-row > div:nth-child(3), .grid-row > div:nth-child(6) {
-        border-right: 3px solid black;
-    }
+.grid-row > div:nth-child(3), .grid-row > div:nth-child(6) {
+    border-right: 3px solid black;
+}
 
 .grid-cell {
     display: table-cell;

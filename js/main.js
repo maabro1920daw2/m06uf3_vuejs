@@ -1,4 +1,10 @@
-class Jugador { }
+class Jugador {
+  constructor(acierto,error,tiempo) {
+    this.acierto = acierto;
+    this.error = error;
+    this.tiempo = tiempo;
+  }
+}
 
 class Partida {
   constructor(sudoku) {
@@ -45,7 +51,7 @@ class Partida {
 
 }
 var db;
-
+const DEFAULT_TRANSITION = 'fade';
 var json = [
   {
     tipo: "suFacil",
@@ -92,7 +98,7 @@ var json = [
 ];
 
 var suJson = new Partida(json);
-
+var distance = 0;
 suJson.guardarSudoku();
 //suJson.mostrarSudoku();
 Vue.component('home', {
@@ -146,11 +152,31 @@ Vue.component('pie-pagina', {
   `
 });
 
+
 var mixinComprobar = {
   methods: {
     evaluarJuego(dif) {
+      var json2 = JSON.parse(JSON.stringify(json));
       var suOriginal = json2[dif].nums;
-
+      var errores=0;
+      var aciertos =0;
+      for (var i = 0; i < 9; ++i) {
+        for (var k = 0; k < 9; ++k) {
+            if(suOriginal[i][k].num==this.sudokuMatrix[i][k].num){
+              aciertos++;
+            }
+            else{
+              errores++;
+            }
+        }
+    }
+    var difi;
+    if(dif==0)difi="facil";
+    else if(dif==1)difi="normal";
+    else difi="dificil";
+    var puntuacion=[{Dificultad: difi, Aciertos: aciertos, Errores: errores, Tiempo: this.minutos+"min "+this.segundos+"s"}];
+    localStorage.setItem("Puntuacion", JSON.stringify(puntuacion));
+    clearInterval(this.interval);
     }
   }
 }
@@ -158,45 +184,59 @@ var mixinComprobar = {
 Vue.component('su-facil', {
   data: function() {
     return {
+      prevHeight: 0,
       sudokuMatrix: [],
-      initializeGameText: "Empezar!",
-      evaluateGameText: "Verificar!",
+      initializeGameText: "Empezar",
+      evaluateGameText: "Verificar",
       answerImage: "",
       isGameStarted: false,
-      showAnswer: false
+      showAnswer: false,
+      transitionName: DEFAULT_TRANSITION,
+      tiempo: 0,
+      segundos: 0,
+      minutos: 0,
+      interval: null,
     };
   },
   mixins: [mixinComprobar],
   methods: {
-    initializeGame() {    
+    iniciarJuego() {    
       var json2 = JSON.parse(JSON.stringify(json));
       var suFacil = json2[0].nums;
-      // Empty two random cells per row
       for (var i = 0; i < 9; ++i) {
           for (var k = 0; k < 3; ++k) {
               var randomColumnIndex = Math.floor(Math.random() * suFacil.length);
               suFacil[i][randomColumnIndex].num = "";
           }
       }
-      console.log(json);
       this.sudokuMatrix = suFacil;
-      console.log(this.sudokuMatrix);
       this.initializeGameText = "Reiniciar";
       this.isGameStarted = true;
+      this.tiempo = 0;
+      this.segundos = 0;
+      this.minutos = 0;
+      this.interval = setInterval(this.temporizador, 1000);
+    },
+    temporizador() {    
+      this.tiempo = this.tiempo + 1000;
+      this.segundos = Math.floor((this.tiempo % (1000 * 60)) / 1000);
+      this.minutos = Math.floor((this.tiempo % (1000 * 60 * 60)) / (1000 * 60));
     }
   },
   template: `<div>
   <div id="app-sudoku">
 
   <div class="buttons-container">
-      <button class="button" v-on:click="initializeGame()"><span>{{ initializeGameText }}</span></button>
+      <button class="button" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
 
-      <transition name="fade">
+      <transition :name="transitionName">
           <button class="button" v-on:click="evaluarJuego(0)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
       </transition>
   </div>
 
-  <transition name="fade">
+  <div><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
+
+  <transition :name="transitionName">
       <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
 
           <div v-for="row in sudokuMatrix" class="grid-row">
@@ -210,7 +250,7 @@ Vue.component('su-facil', {
       </div>
   </transition>
 
-  <transition name="fade">
+  <transition :name="transitionName">
       <div v-if="showAnswer" class="answer">
           <img v-bind:src="answerImage" class="answer-image" />
       </div>
@@ -221,23 +261,160 @@ Vue.component('su-facil', {
 });
 
 Vue.component('su-normal', {
+  data: function() {
+    return {
+      prevHeight: 0,
+      sudokuMatrix: [],
+      initializeGameText: "Empezar",
+      evaluateGameText: "Verificar",
+      answerImage: "",
+      isGameStarted: false,
+      showAnswer: false,
+      transitionName: DEFAULT_TRANSITION,
+      tiempo: 0,
+      segundos: 0,
+      minutos: 0,
+      interval: null,
+    };
+  },
+  mixins: [mixinComprobar],
+  methods: {
+    iniciarJuego() {    
+      var json2 = JSON.parse(JSON.stringify(json));
+      var suNormal = json2[1].nums;
+      for (var i = 0; i < 9; ++i) {
+          for (var k = 0; k < 3; ++k) {
+              var randomColumnIndex = Math.floor(Math.random() * suNormal.length);
+              suNormal[i][randomColumnIndex].num = "";
+          }
+      }
+      this.sudokuMatrix = suNormal;
+      this.initializeGameText = "Reiniciar";
+      this.isGameStarted = true;
+      this.tiempo = 0;
+      this.segundos = 0;
+      this.minutos = 0;
+      this.interval = setInterval(this.temporizador, 1000);
+    },
+    temporizador() {     
+      this.tiempo = this.tiempo + 1000;
+      this.segundos = Math.floor((this.tiempo % (1000 * 60)) / 1000);
+      this.minutos = Math.floor((this.tiempo % (1000 * 60 * 60)) / (1000 * 60));
+    }
+  },
   template: `<div>
-  <div class="home-container">
-  <p>Do you see any Teletubbies in here? Do you see a slender plastic tag clipped to my shirt with my name printed on it? Do you see a little Asian child with a blank expression on his face sitting outside on a mechanical helicopter that shakes when you put quarters in it? No? Well, that's what you see at a toy store. And you must think you're in a toy store, because you're here shopping for an infant named Jeb. </p>
-  <p>Now that there is the Tec-9, a crappy spray gun from South Miami. This gun is advertised as the most popular gun in American crime. Do you believe that shit? It actually says that in the little book that comes with it: the most popular gun in American crime. Like they're actually proud of that shit.  </p>
-  <p>Now that there is the Tec-9, a crappy spray gun from South Miami. This gun is advertised as the most popular gun in American crime. Do you believe that shit? It actually says that in the little book that comes with it: the most popular gun in American crime. Like they're actually proud of that shit.  </p> 
+  <div id="app-sudoku">
+
+  <div class="buttons-container">
+      <button class="button" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
+
+      <transition :name="transitionName">
+          <button class="button" v-on:click="evaluarJuego(1)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
+      </transition>
   </div>
+
+  <div><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
+
+  <transition :name="transitionName">
+      <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
+
+          <div v-for="row in sudokuMatrix" class="grid-row">
+              <div v-for="cell in row" class="grid-cell">
+                  <transition-group tag="div" name="list-animation">
+                      <input type="text" v-bind:key="cell.num" v-model="cell.num" class="grid-cell-editor" />
+                  </transition-group>
+              </div>
+          </div>
+
+      </div>
+  </transition>
+
+  <transition :name="transitionName">
+      <div v-if="showAnswer" class="answer">
+          <img v-bind:src="answerImage" class="answer-image" />
+      </div>
+  </transition>
+
+</div>
   </div>`
 });
 
 Vue.component('su-dificil', {
+  data: function() {
+    return {
+      prevHeight: 0,
+      sudokuMatrix: [],
+      initializeGameText: "Empezar",
+      evaluateGameText: "Verificar",
+      answerImage: "",
+      isGameStarted: false,
+      showAnswer: false,
+      transitionName: DEFAULT_TRANSITION,
+      tiempo: 0,
+      segundos: 0,
+      minutos: 0,
+      interval: null,
+    };
+  },
+  mixins: [mixinComprobar],
+  methods: {
+    iniciarJuego() {    
+      var json2 = JSON.parse(JSON.stringify(json));
+      var suDificil = json2[2].nums;
+      for (var i = 0; i < 9; ++i) {
+          for (var k = 0; k < 3; ++k) {
+              var randomColumnIndex = Math.floor(Math.random() * suDificil.length);
+              suDificil[i][randomColumnIndex].num = "";
+          }
+      }
+      this.sudokuMatrix = suDificil;
+      this.initializeGameText = "Reiniciar";
+      this.isGameStarted = true;
+      this.tiempo = 0;
+      this.segundos = 0;
+      this.minutos = 0;
+      this.interval = setInterval(this.temporizador, 1000);
+    },
+    temporizador() {    
+      this.tiempo = this.tiempo + 1000;
+      this.segundos = Math.floor((this.tiempo % (1000 * 60)) / 1000);
+      this.minutos = Math.floor((this.tiempo % (1000 * 60 * 60)) / (1000 * 60));
+    }
+  },
   template: `<div>
-  <div class="home-container">
-  <p>Do you see any Teletubbies in here? Do you see a slender plastic tag clipped to my shirt with my name printed on it? Do you see a little Asian child with a blank expression on his face sitting outside on a mechanical helicopter that shakes when you put quarters in it? No? Well, that's what you see at a toy store. And you must think you're in a toy store, because you're here shopping for an infant named Jeb. </p>
-  <p>Now that there is the Tec-9, a crappy spray gun from South Miami. This gun is advertised as the most popular gun in American crime. Do you believe that shit? It actually says that in the little book that comes with it: the most popular gun in American crime. Like they're actually proud of that shit.  </p>
-  <p>Now that there is the Tec-9, a crappy spray gun from South Miami. This gun is advertised as the most popular gun in American crime. Do you believe that shit? It actually says that in the little book that comes with it: the most popular gun in American crime. Like they're actually proud of that shit.  </p>
-  <p>Now that there is the Tec-9, a crappy spray gun from South Miami. This gun is advertised as the most popular gun in American crime. Do you believe that shit? It actually says that in the little book that comes with it: the most popular gun in American crime. Like they're actually proud of that shit.  </p>  
+  <div id="app-sudoku">
+
+  <div class="buttons-container">
+      <button class="button" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
+
+      <transition :name="transitionName">
+          <button class="button" v-on:click="evaluarJuego(2)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
+      </transition>
   </div>
+
+  <div><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
+
+  <transition :name="transitionName">
+      <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
+
+          <div v-for="row in sudokuMatrix" class="grid-row">
+              <div v-for="cell in row" class="grid-cell">
+                  <transition-group tag="div" name="list-animation">
+                      <input type="text" v-bind:key="cell.num" v-model="cell.num" class="grid-cell-editor" />
+                  </transition-group>
+              </div>
+          </div>
+
+      </div>
+  </transition>
+
+  <transition :name="transitionName">
+      <div v-if="showAnswer" class="answer">
+          <img v-bind:src="answerImage" class="answer-image" />
+      </div>
+  </transition>
+
+</div>
   </div>`
 });
 
@@ -272,8 +449,6 @@ const rutes = {
   '#/sudoku/normal': normal,
   '#/sudoku/dificil': dificil
 };
-
-const DEFAULT_TRANSITION = 'fade';
 
 var app = new Vue({
   el: '#app',
