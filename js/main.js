@@ -148,7 +148,7 @@ Vue.component('home', {
 
 Vue.component('pie-pagina', {
   template: `
-  <footer class="mastfoot mt-auto">
+  <footer>
     <div class="inner">
       <p>&copy Sudoku! M06UF3 DAW2.</p>
       <p>Creado por Victor Lucas y Marcos Abaurrea</p>
@@ -229,39 +229,39 @@ Vue.component('su-facil', {
     }
   },
   template: `<div>
-  <div id="app-sudoku">
+  <div class="app-sudoku">
 
-  <div class="buttons-container">
-      <button class="button" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
+    <div class="buttons-container">
+        <button class="button  btn btn-dark" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
 
-      <transition :name="transitionName">
-          <button class="button" v-on:click="evaluarJuego(0)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
-      </transition>
+        <transition :name="transitionName">
+            <button class="button  btn btn-dark" v-on:click="evaluarJuego(0)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
+        </transition>
+    </div>
+
+    <div v-if="isGameStarted"><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
+
+    <transition :name="transitionName">
+        <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
+
+            <div v-for="row in sudokuMatrix" class="grid-row">
+                <div v-for="cell in row" class="grid-cell">
+                    <transition-group tag="div" name="list-animation">
+                        <input type="text" v-bind:key="cell.num" v-model="cell.num" class="grid-cell-editor" />
+                    </transition-group>
+                </div>
+            </div>
+
+        </div>
+    </transition>
+
+    <transition :name="transitionName">
+        <div v-if="showAnswer" class="answer">
+            <img v-bind:src="answerImage" class="answer-image" />
+        </div>
+    </transition>
+
   </div>
-
-  <div><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
-
-  <transition :name="transitionName">
-      <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
-
-          <div v-for="row in sudokuMatrix" class="grid-row">
-              <div v-for="cell in row" class="grid-cell">
-                  <transition-group tag="div" name="list-animation">
-                      <input type="text" v-bind:key="cell.num" v-model="cell.num" class="grid-cell-editor" />
-                  </transition-group>
-              </div>
-          </div>
-
-      </div>
-  </transition>
-
-  <transition :name="transitionName">
-      <div v-if="showAnswer" class="answer">
-          <img v-bind:src="answerImage" class="answer-image" />
-      </div>
-  </transition>
-
-</div>
   </div>`
 });
 
@@ -308,37 +308,37 @@ Vue.component('su-normal', {
     }
   },
   template: `<div>
-  <div id="app-sudoku">
+  <div class="app-sudoku">
 
-  <div class="buttons-container">
-      <button class="button" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
+    <div class="buttons-container">
+        <button class="button  btn btn-dark" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
 
-      <transition :name="transitionName">
-          <button class="button" v-on:click="evaluarJuego(1)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
-      </transition>
-  </div>
+        <transition :name="transitionName">
+            <button class="button  btn btn-dark" v-on:click="evaluarJuego(1)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
+        </transition>
+    </div>
 
-  <div><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
+    <div v-if="isGameStarted"><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
 
-  <transition :name="transitionName">
-      <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
+    <transition :name="transitionName">
+        <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
 
-          <div v-for="row in sudokuMatrix" class="grid-row">
-              <div v-for="cell in row" class="grid-cell">
-                  <transition-group tag="div" name="list-animation">
-                      <input type="text" v-bind:key="cell.num" v-model="cell.num" class="grid-cell-editor" />
-                  </transition-group>
-              </div>
-          </div>
+            <div v-for="row in sudokuMatrix" class="grid-row">
+                <div v-for="cell in row" class="grid-cell">
+                    <transition-group tag="div" name="list-animation">
+                        <input type="text" v-bind:key="cell.num" v-model="cell.num" class="grid-cell-editor" />
+                    </transition-group>
+                </div>
+            </div>
 
-      </div>
-  </transition>
+        </div>
+    </transition>
 
-  <transition :name="transitionName">
-      <div v-if="showAnswer" class="answer">
-          <img v-bind:src="answerImage" class="answer-image" />
-      </div>
-  </transition>
+    <transition :name="transitionName">
+        <div v-if="showAnswer" class="answer">
+            <img v-bind:src="answerImage" class="answer-image" />
+        </div>
+    </transition>
 
 </div>
   </div>`
@@ -387,17 +387,17 @@ Vue.component('su-dificil', {
     }
   },
   template: `<div>
-  <div id="app-sudoku">
+  <div class="app-sudoku">
 
   <div class="buttons-container">
-      <button class="button" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
+      <button class="button btn btn-dark" v-on:click="iniciarJuego()"><span>{{ initializeGameText }}</span></button>
 
       <transition :name="transitionName">
-          <button class="button" v-on:click="evaluarJuego(2)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
+          <button class="button btn btn-dark" v-on:click="evaluarJuego(2)" v-if="isGameStarted"><span>{{ evaluateGameText }}</span></button>
       </transition>
   </div>
 
-  <div><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
+  <div v-if="isGameStarted"><p>Tiempo {{minutos}}min {{segundos}}s</p></div>
 
   <transition :name="transitionName">
       <div class="grid-sudoku" v-if="isGameStarted && !showAnswer">
