@@ -149,7 +149,27 @@ Vue.component('pie-pagina', {
 var mixinComprobar = {
   methods: {
     evaluarJuego(dif) {
+      var json2 = JSON.parse(JSON.stringify(json));
       var suOriginal = json2[dif].nums;
+      var errores=0;
+      var aciertos =0;
+      for (var i = 0; i < 9; ++i) {
+        for (var k = 0; k < 9; ++k) {
+            if(suOriginal[i][k].num==this.sudokuMatrix[i][k].num){
+              aciertos++;
+            }
+            else{
+              errores++;
+            }
+        }
+    }
+    var difi;
+    if(dif==0)difi="facil";
+    else if(dif==1)difi="normal";
+    else difi="dificil";
+    var puntuacion=[{Dificultad: difi, Aciertos: aciertos, Errores: errores, Tiempo: 20}]
+    localStorage.setItem("Puntuacio", JSON.stringify(puntuacion));
+    console.log(errores); 
 
     }
   }
