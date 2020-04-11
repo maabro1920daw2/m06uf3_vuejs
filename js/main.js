@@ -102,6 +102,23 @@ var distance = 0;
 suJson.guardarSudoku();
 //suJson.mostrarSudoku();
 Vue.component('home', {
+  data: function() {
+    return {
+      puntuaciones: []
+    };    
+  },
+  created: function() {
+    if(this.puntuaciones.length != localStorage.length){
+      for(var m = 0; m < localStorage.length; m++) {
+        let key = "p"+m;
+        let datosDB = JSON.parse(localStorage.getItem(key));
+        
+        this.puntuaciones.push(datosDB);
+        
+      }
+    }
+    console.log(this.puntuaciones);
+  },
   template: `
   <div>
   <div class="home-container">
@@ -116,23 +133,11 @@ Vue.component('home', {
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <th scope="row">1</th>
-          <td>Mark</td>
-          <td>Otto</td>
-          <td>@mdo</td>
-        </tr>
-        <tr>
-          <th scope="row">2</th>
-          <td>Jacob</td>
-          <td>Thornton</td>
-          <td>@fat</td>
-        </tr>
-        <tr>
-          <th scope="row">3</th>
-          <td>Larry</td>
-          <td>the Bird</td>
-          <td>@twitter</td>
+        <tr v-for="{dificultad, aciertos, errores, tiempo} in puntuaciones">
+          <th scope="row">{{dificultad}}</th>
+          <td>{{aciertos}}</td>
+          <td>{{errores}}</td>
+          <td>{{tiempo}}</td>
         </tr>
       </tbody>
     </table>
@@ -171,11 +176,11 @@ var mixinComprobar = {
         }
     }
     var difi;
-    if(dif==0)difi="facil";
-    else if(dif==1)difi="normal";
-    else difi="dificil";
-    var puntuacion=[{Dificultad: difi, Aciertos: aciertos, Errores: errores, Tiempo: this.minutos+"min "+this.segundos+"s"}];
-    localStorage.setItem("Puntuacion", JSON.stringify(puntuacion));
+    if(dif==0)difi="Fácil";
+    else if(dif==1)difi="Normal";
+    else difi="Difícil";
+    var puntuacion={dificultad: difi, aciertos: aciertos, errores: errores, tiempo: this.minutos+"min "+this.segundos+"s"};
+    localStorage.setItem("p"+localStorage.length, JSON.stringify(puntuacion));
     clearInterval(this.interval);
     }
   }
