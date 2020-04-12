@@ -1,30 +1,33 @@
 class Jugador {
-  constructor(acierto,error,tiempo) {
+  constructor(acierto, error, tiempo) {
     this.acierto = acierto;
     this.error = error;
     this.tiempo = tiempo;
   }
 }
-
+const indexedDB = window.indexedDB;
+var request = indexedDB.open("sudoku", 1);
 class Partida {
   constructor(sudoku) {
     this.sudoku = sudoku;
+    this.sudo2=null;
   }
 
   guardarSudoku() {
-    const indexedDB = window.indexedDB;
-    var request = indexedDB.open("sudoku", 1);
+
     var sud = this.sudoku;
     request.onerror = function (event) {
       console.log("Error: ", event.target.errorCode);
     }
     request.onupgradeneeded = function () {
       db = request.result;
-      const objectStore = db.createObjectStore('sudoku', { autoIncrement: true, keyPath: 'tipo' });
+      const objectStore = db.createObjectStore(['sudoku'], { keyPath: 'tipo', autoIncrement: true });
       objectStore.createIndex('nums', 'nums.num', { unique: false, multiEntry: true });
       objectStore.transaction.oncomplete = function () {
-        var transaction = db.transaction(['sudoku'], 'readwrite').objectStore('sudoku');
-        transaction.add(sud);
+        var transaction = db.transaction(['sudoku'], 'readwrite').objectStore(['sudoku']);
+        transaction.add(sud[0]);
+        transaction.add(sud[1]);
+        transaction.add(sud[2]);
       }
     };
     request.onsuccess = function (event) {
@@ -32,23 +35,37 @@ class Partida {
     }
   }
 
-  /*mostrarSudoku() {
-    const indexedDB = window.indexedDB;
-    var req = indexedDB.open("sudoku", 1);
+  mostrarSudoku(dif) {
 
-    req.onerror = function (event) {
-      // Handle errors!
-    };
-    req.onsuccess = function () {
-      db = req.result;
-      db.transaction(['sudoku'], 'readonly').objectStore('sudoku').get('suFacil') = function (event) {
-        //console.log(event.target.result.tipo);
-        var array = event.target.result.nums[0].num[0];
-        console.log(array);
-      }
-    };
-  }*/
 
+    var transaction = db.transaction(['sudoku'], 'readwrite');
+    var objectStore2 = transaction.objectStore(['sudoku']);
+    
+    
+    if (dif == 0) {
+      objectStore2.get("suFacil").onsuccess = function (event) {
+        
+        this.sudo2= event.target.result.nums;
+        
+      };
+    }
+    else if(dif==1){
+      objectStore2.get("suNormal").onsuccess = function (event) {
+        
+        this.sudo2= event.target.result.nums;
+      };
+    }
+    else {
+      objectStore2.get("suDificil").onsuccess = function (event) {
+        
+        this.sudo2= event.target.result.nums;
+      };
+    }
+    
+  
+  
+
+  }
 }
 var db;
 const DEFAULT_TRANSITION = 'fade';
@@ -100,21 +117,21 @@ var json = [
 var suJson = new Partida(json);
 var distance = 0;
 suJson.guardarSudoku();
-//suJson.mostrarSudoku();
+
 Vue.component('home', {
-  data: function() {
+  data: function () {
     return {
       puntuaciones: []
-    };    
+    };
   },
-  created: function() {
-    if(this.puntuaciones.length != localStorage.length){
-      for(var m = 0; m < localStorage.length; m++) {
-        let key = "p"+m;
+  created: function () {
+    if (this.puntuaciones.length != localStorage.length) {
+      for (var m = 0; m < localStorage.length; m++) {
+        let key = "p" + m;
         let datosDB = JSON.parse(localStorage.getItem(key));
-        
+
         this.puntuaciones.push(datosDB);
-        
+
       }
     }
     console.log(this.puntuaciones);
@@ -163,31 +180,31 @@ var mixinComprobar = {
     evaluarJuego(dif) {
       var json2 = JSON.parse(JSON.stringify(json));
       var suOriginal = json2[dif].nums;
-      var errores=0;
-      var aciertos =0;
+      var errores = 0;
+      var aciertos = 0;
       for (var i = 0; i < 9; ++i) {
         for (var k = 0; k < 9; ++k) {
-            if(suOriginal[i][k].num==this.sudokuMatrix[i][k].num){
-              aciertos++;
-            }
-            else{
-              errores++;
-            }
+          if (suOriginal[i][k].num == this.sudokuMatrix[i][k].num) {
+            aciertos++;
+          }
+          else {
+            errores++;
+          }
         }
-    }
-    var difi;
-    if(dif==0)difi="Fácil";
-    else if(dif==1)difi="Normal";
-    else difi="Difícil";
-    var puntuacion={dificultad: difi, aciertos: aciertos, errores: errores, tiempo: this.minutos+"min "+this.segundos+"s"};
-    localStorage.setItem("p"+localStorage.length, JSON.stringify(puntuacion));
-    clearInterval(this.interval);
+      }
+      var difi;
+      if (dif == 0) difi = "Fácil";
+      else if (dif == 1) difi = "Normal";
+      else difi = "Difícil";
+      var puntuacion = { dificultad: difi, aciertos: aciertos, errores: errores, tiempo: this.minutos + "min " + this.segundos + "s" };
+      localStorage.setItem("p" + localStorage.length, JSON.stringify(puntuacion));
+      clearInterval(this.interval);
     }
   }
 }
 
 Vue.component('su-facil', {
-  data: function() {
+  data: function () {
     return {
       prevHeight: 0,
       sudokuMatrix: [],
@@ -201,28 +218,35 @@ Vue.component('su-facil', {
       segundos: 0,
       minutos: 0,
       interval: null,
+      suFacil: null,
     };
   },
   mixins: [mixinComprobar],
   methods: {
-    iniciarJuego() {    
-      var json2 = JSON.parse(JSON.stringify(json));
-      var suFacil = json2[0].nums;
-      for (var i = 0; i < 9; ++i) {
+    iniciarJuego() {
+      var transaction = db.transaction(['sudoku'], 'readwrite');
+    var objectStore2 = transaction.objectStore(['sudoku']);
+    
+    this.suFacil= objectStore2.get("suFacil").onsuccess = function (event) {
+         suFacil = event.target.result.nums;
+        console.log(suFacil);
+        for (var i = 0; i < 9; ++i) {
           for (var k = 0; k < 3; ++k) {
-              var randomColumnIndex = Math.floor(Math.random() * suFacil.length);
-              suFacil[i][randomColumnIndex].num = "";
+            var randomColumnIndex = Math.floor(Math.random() * suFacil.length);
+            suFacil[i][randomColumnIndex].num = "";
           }
-      }
-      this.sudokuMatrix = suFacil;
-      this.initializeGameText = "Reiniciar";
-      this.isGameStarted = true;
-      this.tiempo = 0;
-      this.segundos = 0;
-      this.minutos = 0;
-      this.interval = setInterval(this.temporizador, 1000);
+        }
+        this.sudokuMatrix = suFacil;
+        this.initializeGameText = "Reiniciar";
+        this.isGameStarted = true;
+        this.tiempo = 0;
+        this.segundos = 0;
+        this.minutos = 0;
+        this.interval = setInterval(this.temporizador, 1000);
+    }
+     
     },
-    temporizador() {    
+    temporizador() {
       this.tiempo = this.tiempo + 1000;
       this.segundos = Math.floor((this.tiempo % (1000 * 60)) / 1000);
       this.minutos = Math.floor((this.tiempo % (1000 * 60 * 60)) / (1000 * 60));
@@ -266,7 +290,7 @@ Vue.component('su-facil', {
 });
 
 Vue.component('su-normal', {
-  data: function() {
+  data: function () {
     return {
       prevHeight: 0,
       sudokuMatrix: [],
@@ -284,14 +308,14 @@ Vue.component('su-normal', {
   },
   mixins: [mixinComprobar],
   methods: {
-    iniciarJuego() {    
+    iniciarJuego() {
       var json2 = JSON.parse(JSON.stringify(json));
       var suNormal = json2[1].nums;
       for (var i = 0; i < 9; ++i) {
-          for (var k = 0; k < 3; ++k) {
-              var randomColumnIndex = Math.floor(Math.random() * suNormal.length);
-              suNormal[i][randomColumnIndex].num = "";
-          }
+        for (var k = 0; k < 3; ++k) {
+          var randomColumnIndex = Math.floor(Math.random() * suNormal.length);
+          suNormal[i][randomColumnIndex].num = "";
+        }
       }
       this.sudokuMatrix = suNormal;
       this.initializeGameText = "Reiniciar";
@@ -301,7 +325,7 @@ Vue.component('su-normal', {
       this.minutos = 0;
       this.interval = setInterval(this.temporizador, 1000);
     },
-    temporizador() {     
+    temporizador() {
       this.tiempo = this.tiempo + 1000;
       this.segundos = Math.floor((this.tiempo % (1000 * 60)) / 1000);
       this.minutos = Math.floor((this.tiempo % (1000 * 60 * 60)) / (1000 * 60));
@@ -345,7 +369,7 @@ Vue.component('su-normal', {
 });
 
 Vue.component('su-dificil', {
-  data: function() {
+  data: function () {
     return {
       prevHeight: 0,
       sudokuMatrix: [],
@@ -363,14 +387,14 @@ Vue.component('su-dificil', {
   },
   mixins: [mixinComprobar],
   methods: {
-    iniciarJuego() {    
+    iniciarJuego() {
       var json2 = JSON.parse(JSON.stringify(json));
       var suDificil = json2[2].nums;
       for (var i = 0; i < 9; ++i) {
-          for (var k = 0; k < 3; ++k) {
-              var randomColumnIndex = Math.floor(Math.random() * suDificil.length);
-              suDificil[i][randomColumnIndex].num = "";
-          }
+        for (var k = 0; k < 3; ++k) {
+          var randomColumnIndex = Math.floor(Math.random() * suDificil.length);
+          suDificil[i][randomColumnIndex].num = "";
+        }
       }
       this.sudokuMatrix = suDificil;
       this.initializeGameText = "Reiniciar";
@@ -380,7 +404,7 @@ Vue.component('su-dificil', {
       this.minutos = 0;
       this.interval = setInterval(this.temporizador, 1000);
     },
-    temporizador() {    
+    temporizador() {
       this.tiempo = this.tiempo + 1000;
       this.segundos = Math.floor((this.tiempo % (1000 * 60)) / 1000);
       this.minutos = Math.floor((this.tiempo % (1000 * 60 * 60)) / (1000 * 60));
