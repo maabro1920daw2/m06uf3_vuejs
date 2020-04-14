@@ -1,12 +1,19 @@
 class Jugador {
-  constructor(acierto, error, tiempo) {
+  constructor(dificultad, acierto, error, tiempo) {
+    this.dificultad = dificultad;
     this.acierto = acierto;
     this.error = error;
     this.tiempo = tiempo;
   }
+
+  guaradarPuntuacion() {
+    var puntuacion = { dificultad: this.dificultad, aciertos: this.acierto, errores: this.error, tiempo: this.tiempo };
+    localStorage.setItem("p" + localStorage.length, JSON.stringify(puntuacion));
+  }
+
 }
 const indexedDB = window.indexedDB;
-var request = indexedDB.open("sudoku", 1);
+
 class Partida {
   constructor(sudoku) {
     this.sudoku = sudoku;
@@ -14,13 +21,15 @@ class Partida {
   }
 
   guardarSudoku() {
-
+    var request = indexedDB.open("sudoku", 1);
+    var dif;
     var sud = this.sudoku;
     request.onerror = function (event) {
       console.log("Error: ", event.target.errorCode);
     }
     request.onupgradeneeded = function () {
       db = request.result;
+      
       const objectStore = db.createObjectStore(['sudoku'], { keyPath: 'tipo', autoIncrement: true });
       objectStore.createIndex('nums', 'nums.num', { unique: false, multiEntry: true });
       objectStore.transaction.oncomplete = function () {
@@ -29,43 +38,43 @@ class Partida {
         transaction.add(sud[1]);
         transaction.add(sud[2]);
       }
+      //db.close();
     };
     request.onsuccess = function (event) {
       db = request.result;
+      
+      //db.close();
+      //mostrarSudoku(dif);
     }
+    
   }
 
   mostrarSudoku(dif) {
+    var request = indexedDB.open("sudoku", 1);
+    var dd = [];
 
+    /*request.onsuccess = function(event) {
+      
+    }*/
 
-    var transaction = db.transaction(['sudoku'], 'readwrite');
-    var objectStore2 = transaction.objectStore(['sudoku']);
-    
-    
-    if (dif == 0) {
-      objectStore2.get("suFacil").onsuccess = function (event) {
-        
-        this.sudo2= event.target.result.nums;
-        
-      };
+    //db = request.result;
+    console.log(db);
+    const obj = db.objectStore('sudoku').get(dif);
+    obj.transaction.oncomplete = function (event) {
+      return event.target.result.nums;
     }
-    else if(dif==1){
-      objectStore2.get("suNormal").onsuccess = function (event) {
-        
-        this.sudo2= event.target.result.nums;
-      };
-    }
-    else {
-      objectStore2.get("suDificil").onsuccess = function (event) {
-        
-        this.sudo2= event.target.result.nums;
-      };
-    }
-    
+    /*db.transaction(['sudoku'], 'readonly').objectStore('sudoku').get(dif).oncomplete = function(event){
+      //dd.push(event.target.result.nums);
+      
+    } ;*/
+                       
+    console.log(dd);
+    //db.close();
+    //return dd;
   
-  
-
   }
+
+   
 }
 var db;
 const DEFAULT_TRANSITION = 'fade';
@@ -115,7 +124,6 @@ var json = [
 ];
 
 var suJson = new Partida(json);
-var distance = 0;
 suJson.guardarSudoku();
 
 Vue.component('home', {
@@ -129,18 +137,15 @@ Vue.component('home', {
       for (var m = 0; m < localStorage.length; m++) {
         let key = "p" + m;
         let datosDB = JSON.parse(localStorage.getItem(key));
-
         this.puntuaciones.push(datosDB);
-
       }
     }
-    console.log(this.puntuaciones);
   },
   template: `
   <div>
   <div class="home-container">
     <h2>Puntuaciones</h2>
-    <table class="table">
+    <table class="table table-hover">
       <thead class="thead-dark">
         <tr>
           <th scope="col">Dificultad</th>
@@ -196,8 +201,28 @@ var mixinComprobar = {
       if (dif == 0) difi = "Fácil";
       else if (dif == 1) difi = "Normal";
       else difi = "Difícil";
-      var puntuacion = { dificultad: difi, aciertos: aciertos, errores: errores, tiempo: this.minutos + "min " + this.segundos + "s" };
-      localStorage.setItem("p" + localStorage.length, JSON.stringify(puntuacion));
+      var tiempo = this.minutos + "min " + this.segundos + "s";
+      var jug = new Jugador(difi,aciertos,errores,tiempo);
+      jug.guaradarPuntuacion();
+      if(errores > 0) {
+        this.answerText = "Has perdido! :(";
+        this.showAnswer = true;
+        this.isGameStarted = false;
+        this.bad = true;
+        setTimeout(() => {
+          this.showAnswer = false;
+          this.isGameStarted = true;
+        }, 2000);
+      }else{
+        this.answerText = "Has ganado! :)";
+        this.showAnswer = true;
+        this.isGameStarted = false;
+        this.good = true;
+        setTimeout(() => {
+          this.showAnswer = false;
+          this.isGameStarted = true;
+        }, 2000);      
+      }
       clearInterval(this.interval);
     }
   }
@@ -210,7 +235,7 @@ Vue.component('su-facil', {
       sudokuMatrix: [],
       initializeGameText: "Empezar",
       evaluateGameText: "Verificar",
-      answerImage: "",
+      answerText: "",
       isGameStarted: false,
       showAnswer: false,
       transitionName: DEFAULT_TRANSITION,
@@ -218,33 +243,31 @@ Vue.component('su-facil', {
       segundos: 0,
       minutos: 0,
       interval: null,
-      suFacil: null,
+      suFacil: [],
+      good: false,
+      bad: false,
     };
   },
   mixins: [mixinComprobar],
   methods: {
     iniciarJuego() {
-      var transaction = db.transaction(['sudoku'], 'readwrite');
-    var objectStore2 = transaction.objectStore(['sudoku']);
-    
-    this.suFacil= objectStore2.get("suFacil").onsuccess = function (event) {
-         suFacil = event.target.result.nums;
-        console.log(suFacil);
-        for (var i = 0; i < 9; ++i) {
-          for (var k = 0; k < 3; ++k) {
-            var randomColumnIndex = Math.floor(Math.random() * suFacil.length);
-            suFacil[i][randomColumnIndex].num = "";
-          }
+      var json2 = JSON.parse(JSON.stringify(json));
+      this.suFacil = json2[0].nums;
+      console.log(this.suFacil);
+      //this.suFacil = suJson.mostrarSudoku("suFacil");
+      for (var i = 0; i < 9; ++i) {
+        for (var k = 0; k < 3; ++k) {
+          var randomColumnIndex = Math.floor(Math.random() * this.suFacil.length);
+          this.suFacil[i][randomColumnIndex].num = "";
         }
-        this.sudokuMatrix = suFacil;
-        this.initializeGameText = "Reiniciar";
-        this.isGameStarted = true;
-        this.tiempo = 0;
-        this.segundos = 0;
-        this.minutos = 0;
-        this.interval = setInterval(this.temporizador, 1000);
-    }
-     
+      }
+      this.sudokuMatrix = this.suFacil;
+      this.initializeGameText = "Reiniciar";
+      this.isGameStarted = true;
+      this.tiempo = 0;
+      this.segundos = 0;
+      this.minutos = 0;
+      this.interval = setInterval(this.temporizador, 1000);    
     },
     temporizador() {
       this.tiempo = this.tiempo + 1000;
@@ -280,8 +303,8 @@ Vue.component('su-facil', {
     </transition>
 
     <transition :name="transitionName">
-        <div v-if="showAnswer" class="answer">
-            <img v-bind:src="answerImage" class="answer-image" />
+        <div v-if="showAnswer" class="answer" v-bind:class="{ 'bg-success': good, 'bg-danger': bad }">
+            <span class="text-light">{{answerText}}</span>
         </div>
     </transition>
 
@@ -304,6 +327,8 @@ Vue.component('su-normal', {
       segundos: 0,
       minutos: 0,
       interval: null,
+      good: false,
+      bad: false,
     };
   },
   mixins: [mixinComprobar],
@@ -312,7 +337,7 @@ Vue.component('su-normal', {
       var json2 = JSON.parse(JSON.stringify(json));
       var suNormal = json2[1].nums;
       for (var i = 0; i < 9; ++i) {
-        for (var k = 0; k < 3; ++k) {
+        for (var k = 0; k < 4; ++k) {
           var randomColumnIndex = Math.floor(Math.random() * suNormal.length);
           suNormal[i][randomColumnIndex].num = "";
         }
@@ -359,12 +384,12 @@ Vue.component('su-normal', {
     </transition>
 
     <transition :name="transitionName">
-        <div v-if="showAnswer" class="answer">
-            <img v-bind:src="answerImage" class="answer-image" />
+        <div v-if="showAnswer" class="answer" v-bind:class="{ 'bg-success': good, 'bg-danger': bad }">
+            <span class="text-light">{{answerText}}</span>
         </div>
     </transition>
 
-</div>
+  </div>
   </div>`
 });
 
@@ -383,6 +408,8 @@ Vue.component('su-dificil', {
       segundos: 0,
       minutos: 0,
       interval: null,
+      good: false,
+      bad: false,
     };
   },
   mixins: [mixinComprobar],
@@ -391,7 +418,7 @@ Vue.component('su-dificil', {
       var json2 = JSON.parse(JSON.stringify(json));
       var suDificil = json2[2].nums;
       for (var i = 0; i < 9; ++i) {
-        for (var k = 0; k < 3; ++k) {
+        for (var k = 0; k < 5; ++k) {
           var randomColumnIndex = Math.floor(Math.random() * suDificil.length);
           suDificil[i][randomColumnIndex].num = "";
         }
@@ -438,12 +465,12 @@ Vue.component('su-dificil', {
   </transition>
 
   <transition :name="transitionName">
-      <div v-if="showAnswer" class="answer">
-          <img v-bind:src="answerImage" class="answer-image" />
-      </div>
+    <div v-if="showAnswer" class="answer" v-bind:class="{ 'bg-success': good, 'bg-danger': bad }">
+        <span class="text-light">{{answerText}}</span>
+    </div>
   </transition>
 
-</div>
+  </div>
   </div>`
 });
 
